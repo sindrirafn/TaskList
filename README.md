@@ -43,7 +43,9 @@ A simple full-stack task tracking application built with:
 
 ## Project Structure
 Tasklist/
-├── backend/ # ASP.NET Core API
+
+├── backend/ # ASP.NET Core API 
+
 └── frontend/ # React app (Vite)
 
 ## Running the project
