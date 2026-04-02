@@ -5,9 +5,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton<TaskService>();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
-
+app.UseCors();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -52,11 +61,7 @@ app.MapGet("/tasks/{id}", (TaskService taskService, int id) =>
 // Endpoint to update a task's title, description, and completion status
 app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest request) =>
 {
-    if (string.IsNullOrWhiteSpace(request.Title))
-    {
-        return Results.BadRequest("Title is required.");
-    }
-    if (request.Title.Length > 100)
+    if (request.Title != null && request.Title.Length > 100)
     {
         return Results.BadRequest("Title cannot exceed 100 characters.");
     }
