@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
+import { FaTrash, FaEdit, FaTimes, FaXbox, FaTrashAlt, FaRegEdit, FaPencilAlt, FaXing } from 'react-icons/fa'
+import 'react-icons/fa'
+import 'react-icons/fa6'
 import './App.css'
+import { FaXmark, FaXmarksLines } from 'react-icons/fa6'
 
 // function App() {
 //   const [count, setCount] = useState(0)
@@ -262,18 +266,13 @@ function App() {
   return (
     <div className="app">
       <h1>Task Tracker</h1>
-
       <p>{tasks.length} tasks found</p>
       <button onClick={() => setShowAddModal(true)}>+ Add Task</button>
 
       {showAddModal && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
-            <div className="button-group">
-              <span className="close" onClick={() => setShowAddModal(false)}>&times;</span>
-              <span className="edit" >&#9998;</span>
-              <span className="delete" >&#128465;</span>
-            </div>
+            <span className="close" onClick={() => setShowAddModal(false)}><FaXmark/></span>
             <form onSubmit={handleSubmit} className="task-form">
               <input
                 type="text"
@@ -317,7 +316,11 @@ function App() {
       {showDetailModal && selectedTask && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
-            <span className="close" onClick={() => setShowDetailModal(false)}>&times;</span>
+            <div className="button-group">  
+              <span><FaTrashAlt /></span>
+              <span><FaPencilAlt /></span>
+              <span onClick={() => setShowDetailModal(false)}><FaTimes /></span>
+            </div>
             <h2>{selectedTask.title}</h2>
             <p>{selectedTask.description || "No description"}</p>
             <p>Status: {selectedTask.isCompleted ? "Completed" : "Incomplete"}</p>

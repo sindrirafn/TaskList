@@ -24,6 +24,54 @@
   margin-top: 0;
 }
 
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+}
+
+.close svg {
+  width: 15px;
+  height: 15px;
+}
+
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  /* gap: 5px; */
+  margin-bottom: 10px;
+}
+
+.button-group span {
+  font-size: 20px;
+  cursor: pointer;
+  color: #aaa;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.button-group span:hover,
+.button-group span:focus {
+  background-color: #f0f0f0;
+  color: black;
+  text-decoration: none;
+}
+
+.button-group svg {
+  width: 15px;
+  height: 15px;
+}
+
 .modal {
   position: fixed;
   z-index: 1;
@@ -45,19 +93,7 @@
   border-radius: 8px;
 }
 
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
 
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-}
 
 .task-form {
   display: flex;
@@ -91,30 +127,3 @@
     cursor: pointer;
 }}
 
-.button-group {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.edit {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.delete {
-  color: #aaa;
-  float: right;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.button-group span:hover,
-.button-group span:focus {
-  color: black;
-  text-decoration: none;
-}
