@@ -186,14 +186,21 @@ function App() {
 
   return (
     <div className="app">
-      <h1>Task Tracker</h1>
-      <p>{tasks.length} tasks found</p>
-      <button onClick={() => setShowAddModal(true)}>+ Add Task</button>
+      <div className="app-header">
+        <h1>Task Tracker</h1>
+        <button type='submit' onClick={() => setShowAddModal(true)}>+ Add Task</button>
+      </div>
+      
+      <p><b>{tasks.length}</b> total | <b>{tasks.filter(t => !t.isCompleted).length}</b> active | <b>{tasks.filter(t => t.isCompleted).length}</b> completed</p>
+      
 
       {showAddModal && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
-            <span className="close" onClick={() => setShowAddModal(false)}><FaTimes/></span>
+            <div className="addtask-modal-header">
+              <h2>Add Task</h2>
+              <span className="close" onClick={() => setShowAddModal(false)}><FaTimes/></span>
+            </div>
             <form onSubmit={handleSubmit} className="task-form">
               <input
                 type="text"
@@ -227,10 +234,34 @@ function App() {
                 }}
               />
               <div className="task-content">
-                <h3>{task.title}</h3>
-                <p>{task.description || "No description"}</p>
-              </div>
-            </div>
+                <h3 className={task.isCompleted ? 'completed' : ''}>{task.title}</h3>
+                <p className={task.isCompleted ? 'completed' : ''}>{task.description || "No description"}</p>
+              </div>              <div className="task-actions">
+                <button
+                  className="btn-edit"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTask(task);
+                    setIsEditing(true);
+                    setEditTitle(task.title);
+                    setEditDescription(task.description || "");
+                    setShowDetailModal(true);
+                  }}
+                  title="Edit"
+                >
+                  <FaPencilAlt />
+                </button>
+                <button
+                  className="btn-delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTask(task.id);
+                  }}
+                  title="Delete"
+                >
+                  <FaTrashAlt />
+                </button>
+              </div>            </div>
           </div>
         ))}
       </div>
