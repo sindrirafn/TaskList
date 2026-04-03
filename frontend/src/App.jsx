@@ -240,6 +240,24 @@ function App() {
     }
   }
 
+  // Handle deleting a task
+  const deleteTask = async (taskId) => {
+    try {
+      const response = await fetch(`http://localhost:5093/tasks/${taskId}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task.");
+      }
+
+      setTasks(tasks.filter(task => task.id !== taskId));
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    }
+    setShowDetailModal(false);
+  }
+
   // Handle clicking outside the modal to close it
   const handleModalClick = (e) => {
     if (e.target.classList.contains("modal")) {
@@ -317,9 +335,9 @@ function App() {
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
             <div className="button-group">  
-              <span><FaTrashAlt /></span>
-              <span><FaPencilAlt /></span>
-              <span onClick={() => setShowDetailModal(false)}><FaTimes /></span>
+              <span className="delete" onClick={() => deleteTask(selectedTask.id)}><FaTrashAlt /></span>
+              <span className="edit"><FaPencilAlt /></span>
+              <span className="close" onClick={() => setShowDetailModal(false)}><FaTimes /></span>
             </div>
             <h2>{selectedTask.title}</h2>
             <p>{selectedTask.description || "No description"}</p>
