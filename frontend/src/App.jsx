@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
-import { FaTrash, FaEdit, FaTimes, FaXbox, FaTrashAlt, FaRegEdit, FaPencilAlt, FaXing } from 'react-icons/fa'
-import 'react-icons/fa'
-import 'react-icons/fa6'
+import { FaTrashAlt, FaPencilAlt, FaTimes } from 'react-icons/fa'
 import './App.css'
-import { FaXmark, FaXmarksLines } from 'react-icons/fa6'
 
 // function App() {
 //   const [count, setCount] = useState(0)
@@ -164,6 +161,9 @@ function App() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   // Fetch tasks from the API when the component mounts
   useEffect(() => {
@@ -212,7 +212,7 @@ function App() {
       setTasks([...tasks, newTask]);
       setTitle("");
       setDescription("");
-      setShowModal(false);
+      setShowAddModal(false);
     } catch (err) {
       setError(err.message || "Something went wrong.");
     }
@@ -258,17 +258,66 @@ function App() {
     setShowDetailModal(false);
   }
 
+  // Handle editing a task
+  const editTask = async (taskId, updatedFields) => {
+    try {
+      const response = await fetch(`http://localhost:5093/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedFields)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to edit task.");
+      }
+
+      const updatedTask = await response.json();
+      setTasks(tasks.map(task => task.id === taskId ? updatedTask : task));
+      setSelectedTask(updatedTask);
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    }
+  }
+
+  const startEditing = () => {
+    if (!selectedTask) return;
+    setIsEditing(true);
+    setEditTitle(selectedTask.title);
+    setEditDescription(selectedTask.description || "");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    if (selectedTask) {
+      setEditTitle(selectedTask.title);
+      setEditDescription(selectedTask.description || "");
+    }
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+    await editTask(selectedTask.id, { title: editTitle, description: editDescription });
+    setIsEditing(false);
+  };
+
   // Handle clicking outside the modal to close it
   const handleModalClick = (e) => {
     if (e.target.classList.contains("modal")) {
       setShowAddModal(false);
       setShowDetailModal(false);
+      setIsEditing(false);
     }
   };
 
   // Handle clicking a task card to open details modal
   const handleTaskClick = (task) => {
     setSelectedTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+    setIsEditing(false);
     setShowDetailModal(true);
   };
 
@@ -290,7 +339,7 @@ function App() {
       {showAddModal && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
-            <span className="close" onClick={() => setShowAddModal(false)}><FaXmark/></span>
+            <span className="close" onClick={() => setShowAddModal(false)}><FaTimes/></span>
             <form onSubmit={handleSubmit} className="task-form">
               <input
                 type="text"
@@ -336,12 +385,34 @@ function App() {
           <div className="modal-content">
             <div className="button-group">  
               <span className="delete" onClick={() => deleteTask(selectedTask.id)}><FaTrashAlt /></span>
-              <span className="edit"><FaPencilAlt /></span>
-              <span className="close" onClick={() => setShowDetailModal(false)}><FaTimes /></span>
+              {!isEditing ? (
+                <span className="edit" onClick={startEditing}><FaPencilAlt /></span>
+              ) : (
+                <span className="cancel-edit" onClick={handleCancelEdit}>Cancel</span>
+              )}
+              <span className="close" onClick={() => { setShowDetailModal(false); setIsEditing(false); }}><FaTimes /></span>
             </div>
-            <h2>{selectedTask.title}</h2>
-            <p>{selectedTask.description || "No description"}</p>
-            <p>Status: {selectedTask.isCompleted ? "Completed" : "Incomplete"}</p>
+            {!isEditing ? (
+              <>
+                <h2>{selectedTask.title}</h2>
+                <p>{selectedTask.description || "No description"}</p>
+                <p>Status: {selectedTask.isCompleted ? "Completed" : "Incomplete"}</p>
+              </>
+            ) : (
+              <form onSubmit={handleSaveEdit} className="task-form">
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                />
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                />
+                <button type="submit">Save</button>
+              </form>
+            )}
           </div>
         </div>
       )}
