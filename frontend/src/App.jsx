@@ -18,6 +18,9 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [filter, setFilter] = useState("all");
 
   // Fetch tasks from the API when the component mounts
   useEffect(() => {
@@ -45,6 +48,18 @@ function App() {
   }, []);
 
 
+  // Filter tasks based on the selected filter
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === "active") return !task.isCompleted;
+    if (filter === "completed") return task.isCompleted;
+    return true;
+  });
+
+  // Utility function to format dates
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
   // Handle form submission to add a new task
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,6 +165,14 @@ function App() {
     }
   };
 
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      deleteTask(taskToDelete.id);
+      setShowConfirmDelete(false);
+      setTaskToDelete(null);
+    }
+  };
+
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!selectedTask) return;
@@ -176,6 +199,7 @@ function App() {
   };
 
 
+
   if (loading) {
     return <p>Loading tasks...</p>;
   }
@@ -188,18 +212,49 @@ function App() {
     <div className="app">
       <div className="app-header">
         <h1>Task Tracker</h1>
-        <button type='submit' onClick={() => setShowAddModal(true)}>+ Add Task</button>
+        <button className='primary-btn' type='submit' onClick={() => setShowAddModal(true)}>+ Add Task</button>
       </div>
-      
-      <p><b>{tasks.length}</b> total | <b>{tasks.filter(t => !t.isCompleted).length}</b> active | <b>{tasks.filter(t => t.isCompleted).length}</b> completed</p>
-      
+
+      {/* <p><b>{tasks.length}</b> total | <b>{tasks.filter(t => !t.isCompleted).length}</b> active | <b>{tasks.filter(t => t.isCompleted).length}</b> completed</p> */}
+      <div className="task-toolbar">
+        <p className="task-summary">
+          <strong>{tasks.length}</strong> total
+          <span className="separator">|</span>
+          <strong>{tasks.filter((t) => !t.isCompleted).length}</strong> active
+          <span className="separator">|</span>
+          <strong>{tasks.filter((t) => t.isCompleted).length}</strong> completed
+        </p>
+
+        <div className="filter-group">
+          <button
+            className={filter === "all" ? "filter-btn active" : "filter-btn"}
+            onClick={() => setFilter("all")}
+          >
+            All
+          </button>
+          |
+          <button
+            className={filter === "active" ? "filter-btn active" : "filter-btn"}
+            onClick={() => setFilter("active")}
+          >
+            Active
+          </button>
+          |
+          <button
+            className={filter === "completed" ? "filter-btn active" : "filter-btn"}
+            onClick={() => setFilter("completed")}
+          >
+            Completed
+          </button>
+        </div>
+      </div>
 
       {showAddModal && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
             <div className="addtask-modal-header">
               <h2>Add Task</h2>
-              <span className="close" onClick={() => setShowAddModal(false)}><FaTimes/></span>
+              <span className="close" onClick={() => setShowAddModal(false)}><FaTimes /></span>
             </div>
             <form onSubmit={handleSubmit} className="task-form">
               <input
@@ -214,14 +269,16 @@ function App() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <button type="submit">Add Task</button>
+              <button className="primary-btn" type="submit">
+                Add Task
+              </button>
             </form>
           </div>
         </div>
       )}
 
       <div className="task-list">
-        {tasks.map((task) => (
+        {filteredTasks.map((task) => (
           <div className="task-card" key={task.id} onClick={() => handleTaskClick(task)}>
             <div className="task-row">
               <input
@@ -237,7 +294,14 @@ function App() {
               <div className="task-content">
                 <h3 className={task.isCompleted ? 'completed' : ''}>{task.title}</h3>
                 <p className={task.isCompleted ? 'completed' : ''}>{task.description || "No description"}</p>
-              </div>              <div className="task-actions">
+              </div>
+              <div className="meta">
+                  <span className={`badge ${task.isCompleted ? "completed" : "active"}`}>
+                    {task.isCompleted ? "Completed" : "Active"}
+                  </span>
+                </div>
+
+              <div className="task-actions">
                 <button
                   className="btn-edit"
                   onClick={(e) => {
@@ -256,7 +320,8 @@ function App() {
                   className="btn-delete"
                   onClick={(e) => {
                     e.stopPropagation();
-                    deleteTask(task.id);
+                    setTaskToDelete(task);
+                    setShowConfirmDelete(true);
                   }}
                   title="Delete"
                 >
@@ -269,8 +334,8 @@ function App() {
       {showDetailModal && selectedTask && (
         <div className="modal" onClick={handleModalClick}>
           <div className="modal-content">
-            <div className="button-group">  
-              <span className="delete" onClick={() => deleteTask(selectedTask.id)}><FaTrashAlt /></span>
+            <div className="button-group">
+              <span className="delete" onClick={() => { setTaskToDelete(selectedTask); setShowConfirmDelete(true); }}><FaTrashAlt /></span>
               {!isEditing ? (
                 <span className="edit" onClick={startEditing}><FaPencilAlt /></span>
               ) : (
@@ -281,8 +346,16 @@ function App() {
             {!isEditing ? (
               <>
                 <h2>{selectedTask.title}</h2>
-                <p>{selectedTask.description || "No description"}</p>
-                <p>Status: {selectedTask.isCompleted ? "Completed" : "Incomplete"}</p>
+                <p className="description">{selectedTask.description || "No description"}</p>
+                <div className="meta">
+                  <span className={`badge ${selectedTask.isCompleted ? "completed" : "active"}`}>
+                    {selectedTask.isCompleted ? "Completed" : "Active"}
+                  </span>
+                </div>
+                <div className="meta">
+                  <span>Created:</span>
+                  <span>{formatDate(selectedTask.createdAt)}</span>
+                </div>
               </>
             ) : (
               <form onSubmit={handleSaveEdit} className="task-form">
@@ -296,9 +369,31 @@ function App() {
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                 />
-                <button type="submit">Save</button>
+                <div className="modal-actions">
+                  <button className="secondary-btn" onClick={handleCancelEdit}>
+                    Cancel
+                  </button>
+                  <button className="primary-btn" type="submit">
+                    Save
+                  </button>
+                </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+      {showConfirmDelete && (
+        <div className="modal" onClick={() => setShowConfirmDelete(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirmation</h2>
+              <span className="close" onClick={() => setShowConfirmDelete(false)}><FaTimes /></span>
+            </div>
+            <p>Are you sure you want to delete this task?</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowConfirmDelete(false)}>Cancel</button>
+              <button className="delete-btn" onClick={confirmDelete}>Delete</button>
+            </div>
           </div>
         </div>
       )}
