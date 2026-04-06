@@ -295,7 +295,7 @@ function App() {
                 <h3 className={task.isCompleted ? 'completed' : ''}>{task.title}</h3>
                 <p className={task.isCompleted ? 'completed' : ''}>{task.description || "No description"}</p>
               </div>
-              <div className="meta">
+              <div>
                   <span className={`badge ${task.isCompleted ? "completed" : "active"}`}>
                     {task.isCompleted ? "Completed" : "Active"}
                   </span>
