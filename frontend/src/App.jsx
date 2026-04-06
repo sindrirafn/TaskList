@@ -226,6 +226,7 @@ function App() {
             <div className="task-row">
               <input
                 type="checkbox"
+                className='completed-checkbox'
                 checked={task.isCompleted}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
