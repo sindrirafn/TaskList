@@ -1,3 +1,4 @@
+namespace TaskList.Models;
 public class CreateTaskRequest
 {
     public string Title { get; set; } = "";

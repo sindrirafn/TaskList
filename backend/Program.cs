@@ -1,10 +1,16 @@
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.EntityFrameworkCore;
+using TaskList.Models;
+using TaskList.Data;
+using TaskList.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<TaskService>();
+// builder.Services.AddSingleton<TaskService>();
+builder.Services.AddScoped<TaskService>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -15,6 +21,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddDbContext<TaskDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    
 var app = builder.Build();
 app.UseCors();
 // Configure the HTTP request pipeline.
@@ -25,28 +34,61 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
-// var taskList = new TaskService();
-var taskService = app.Services.GetRequiredService<TaskService>();
-for (int i = 1; i <= 5; i++)
+using (var scope = app.Services.CreateScope())
 {
-    taskService.AddTask($"Task {i}", $"Description for Task {i}");
+    var db = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+    db.Database.Migrate();
+
+    if (!db.Tasks.Any())
+    {
+        db.Tasks.AddRange(
+            new TaskItem("Buy groceries", "Buy milk, bread, and eggs"),
+            new TaskItem("Finish backend cleanup", "Remove unused code and optimize performance"),
+            new TaskItem("Walk the dog", "Take the dog for a 30-minute walk")
+        );
+
+        db.SaveChanges();
+    }
 }
+
+// var taskService = app.Services.GetRequiredService<TaskService>();
+// for (int i = 1; i <= 5; i++)
+// {
+//     taskService.AddTask($"Task {i}", $"Description for Task {i}");
+// }
 
 
 // Endpoint to get the list of all tasks with optional filtering by completion status
-app.MapGet("/tasks", (TaskService taskService, bool? isCompleted) =>
+// app.MapGet("/tasks", (TaskService taskService, bool? isCompleted) =>
+// {
+//     var tasks = taskService.GetTasks(isCompleted);
+//     return tasks.ToArray();
+// })
+// .WithName("GetTaskList");
+app.MapGet("/tasks", async (TaskService taskService, bool? isCompleted) =>
 {
-    var tasks = taskService.GetTasks(isCompleted);
-    return tasks.ToArray();
+    var tasks = await taskService.GetTasksAsync(isCompleted);
+    return Results.Ok(tasks);
 })
 .WithName("GetTaskList");
 
-
 // Endpoint to get a specific task by ID
-app.MapGet("/tasks/{id}", (TaskService taskService, int id) =>
+// app.MapGet("/tasks/{id}", (TaskService taskService, int id) =>
+// {
+//     var task = taskService.GetTaskById(id);
+//     if (task != null)
+//     {
+//         return Results.Ok(task);
+//     }
+//     else
+//     {
+//         return Results.NotFound($"Task with ID {id} not found.");
+//     }
+// }).WithName("GetTaskById");
+
+app.MapGet("/tasks/{id}", async (TaskService taskService, int id) =>
 {
-    var task = taskService.GetTaskById(id);
+    var task = await taskService.GetTaskByIdAsync(id);
     if (task != null)
     {
         return Results.Ok(task);
@@ -59,7 +101,30 @@ app.MapGet("/tasks/{id}", (TaskService taskService, int id) =>
 
 
 // Endpoint to update a task's title, description, and completion status
-app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest request) =>
+// app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest request) =>
+// {
+//     if (request.Title != null && request.Title.Length > 100)
+//     {
+//         return Results.BadRequest("Title cannot exceed 100 characters.");
+//     }
+//     if (request.Description != null && request.Description.Length > 500)
+//     {
+//         return Results.BadRequest("Description cannot exceed 500 characters.");
+//     }
+
+//     var result = taskService.UpdateTask(id, request);
+//     if (result is TaskItem updatedTask)
+//     {
+//         return Results.Ok(updatedTask);
+//     }
+//     else
+//     {
+//         return Results.NotFound($"Task with ID {id} not found.");
+//     }
+// }).WithName("UpdateTask");
+
+
+app.MapPut("/tasks/{id}", async(TaskService taskService, int id, UpdateTaskRequest request) =>
 {
     if (request.Title != null && request.Title.Length > 100)
     {
@@ -70,7 +135,7 @@ app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest re
         return Results.BadRequest("Description cannot exceed 500 characters.");
     }
 
-    var result = taskService.UpdateTask(id, request);
+    var result = await taskService.UpdateTaskAsync(id, request);
     if (result is TaskItem updatedTask)
     {
         return Results.Ok(updatedTask);
@@ -83,7 +148,26 @@ app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest re
 
 
 // Endpoint to add a new task. Returns the created task with its assigned ID.
-app.MapPost("/tasks", (TaskService taskService, CreateTaskRequest request) =>
+// app.MapPost("/tasks", (TaskService taskService, CreateTaskRequest request) =>
+// {
+//     if (string.IsNullOrWhiteSpace(request.Title))
+//     {
+//         return Results.BadRequest("Title is required.");
+//     }
+//     if (request.Title.Length > 100)
+//     {
+//         return Results.BadRequest("Title cannot exceed 100 characters.");
+//     }
+//     if (request.Description != null && request.Description.Length > 500)
+//     {
+//         return Results.BadRequest("Description cannot exceed 500 characters.");
+//     }
+
+//     var task = taskService.AddTask(request.Title, request.Description);
+//     return Results.Created($"/tasks/{task.Id}", task);
+// }).WithName("AddTask");
+
+app.MapPost("/tasks", async (TaskService taskService, CreateTaskRequest request) =>
 {
     if (string.IsNullOrWhiteSpace(request.Title))
     {
@@ -98,15 +182,28 @@ app.MapPost("/tasks", (TaskService taskService, CreateTaskRequest request) =>
         return Results.BadRequest("Description cannot exceed 500 characters.");
     }
 
-    var task = taskService.AddTask(request.Title, request.Description);
+    var task = await taskService.AddTaskAsync(request.Title, request.Description);
     return Results.Created($"/tasks/{task.Id}", task);
 }).WithName("AddTask");
 
 
 // Endpoint to remove a task
-app.MapDelete("/tasks/{id}", (TaskService taskService, int id) =>
+// app.MapDelete("/tasks/{id}", (TaskService taskService, int id) =>
+// {
+//     bool success = taskService.RemoveTask(id);
+//     if (success)
+//     {
+//         return Results.Ok($"Task with ID {id} removed.");
+//     }
+//     else
+//     {
+//         return Results.NotFound($"Task with ID {id} not found.");
+//     }
+// }).WithName("RemoveTask");
+
+app.MapDelete("/tasks/{id}", async (TaskService taskService, int id) =>
 {
-    bool success = taskService.RemoveTask(id);
+    bool success = await taskService.RemoveTaskAsync(id);
     if (success)
     {
         return Results.Ok($"Task with ID {id} removed.");
