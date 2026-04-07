@@ -4,6 +4,7 @@ A simple full-stack task tracking application built with:
 
 - **Backend:** ASP.NET Core (.NET, C#)
 - **Frontend:** React (Vite)
+- **Database:** SQLite (via Entity Framework Core)
 - **Architecture:** REST API + client-side UI
 
 ## Features
@@ -13,12 +14,14 @@ A simple full-stack task tracking application built with:
 - Filter tasks by completion status
 - Update task title, description, and completion state
 - Delete tasks
-- In-memory data storage (no database)
+- Persistent storage using SQLite
 
 ## Backend (ASP.NET Core)
 
 - Minimal API structure
-- Dependency Injection (singleton service)
+- Dependency Injection (scoped service layer)
+- Entity Framework Core (SQLite)
+- Database persistence with migrations
 - Request models for create/update operations
 - Input validation
 - REST-style endpoints
@@ -37,16 +40,25 @@ A simple full-stack task tracking application built with:
 - Fetches data from backend API
 - Displays task list
 - Handles loading and error states
-- (Planned/implemented depending on your progress)
-  - Create task form
-  - Completion toggle
 
 ## Project Structure
 Tasklist/
 
-├── backend/ # ASP.NET Core API 
+├── backend/        # ASP.NET Core API
 
-└── frontend/ # React app (Vite)
+│   ├── Data/
+
+│   ├── Models/
+
+│   ├── Services/
+
+│   ├── Contracts/
+
+│   └── Migrations/
+
+│
+
+└── frontend/       # React app (Vite)
 
 ## Running the project
 
@@ -54,6 +66,8 @@ Tasklist/
 
 ```bash
 cd backend
+dotnet restore
+dotnet ef database update
 dotnet run
 ```
 
@@ -71,9 +85,15 @@ This project was built as part of learning and practicing:
  - React fundamentals
  - Full-stack integration
  - Git and project structuring
+ - Working with relational databases using EF Core
+ - Structuring backend services and API layers
  
 ## Future improvements
-- Add database (e.g., SQLite / PostgreSQL)
+- Add due dates and task priorities
 - Improve UI/UX 
 - Add authentication
 - Convert frontend to TypeScript
+
+## Preview
+
+![App Screenshot](./assets/MainScreen.png)
