@@ -42,23 +42,17 @@ A simple full-stack task tracking application built with:
 - Handles loading and error states
 
 ## Project Structure
+```text
 Tasklist/
-
 ├── backend/        # ASP.NET Core API
-
 │   ├── Data/
-
 │   ├── Models/
-
 │   ├── Services/
-
 │   ├── Contracts/
-
 │   └── Migrations/
-
 │
-
 └── frontend/       # React app (Vite)
+```
 
 ## Running the project
 
