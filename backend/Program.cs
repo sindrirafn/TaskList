@@ -34,6 +34,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Ensure the database is created and apply any pending migrations
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
@@ -51,20 +52,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// var taskService = app.Services.GetRequiredService<TaskService>();
-// for (int i = 1; i <= 5; i++)
-// {
-//     taskService.AddTask($"Task {i}", $"Description for Task {i}");
-// }
-
 
 // Endpoint to get the list of all tasks with optional filtering by completion status
-// app.MapGet("/tasks", (TaskService taskService, bool? isCompleted) =>
-// {
-//     var tasks = taskService.GetTasks(isCompleted);
-//     return tasks.ToArray();
-// })
-// .WithName("GetTaskList");
 app.MapGet("/tasks", async (TaskService taskService, bool? isCompleted) =>
 {
     var tasks = await taskService.GetTasksAsync(isCompleted);
@@ -73,19 +62,6 @@ app.MapGet("/tasks", async (TaskService taskService, bool? isCompleted) =>
 .WithName("GetTaskList");
 
 // Endpoint to get a specific task by ID
-// app.MapGet("/tasks/{id}", (TaskService taskService, int id) =>
-// {
-//     var task = taskService.GetTaskById(id);
-//     if (task != null)
-//     {
-//         return Results.Ok(task);
-//     }
-//     else
-//     {
-//         return Results.NotFound($"Task with ID {id} not found.");
-//     }
-// }).WithName("GetTaskById");
-
 app.MapGet("/tasks/{id}", async (TaskService taskService, int id) =>
 {
     var task = await taskService.GetTaskByIdAsync(id);
@@ -101,29 +77,6 @@ app.MapGet("/tasks/{id}", async (TaskService taskService, int id) =>
 
 
 // Endpoint to update a task's title, description, and completion status
-// app.MapPut("/tasks/{id}", (TaskService taskService, int id, UpdateTaskRequest request) =>
-// {
-//     if (request.Title != null && request.Title.Length > 100)
-//     {
-//         return Results.BadRequest("Title cannot exceed 100 characters.");
-//     }
-//     if (request.Description != null && request.Description.Length > 500)
-//     {
-//         return Results.BadRequest("Description cannot exceed 500 characters.");
-//     }
-
-//     var result = taskService.UpdateTask(id, request);
-//     if (result is TaskItem updatedTask)
-//     {
-//         return Results.Ok(updatedTask);
-//     }
-//     else
-//     {
-//         return Results.NotFound($"Task with ID {id} not found.");
-//     }
-// }).WithName("UpdateTask");
-
-
 app.MapPut("/tasks/{id}", async(TaskService taskService, int id, UpdateTaskRequest request) =>
 {
     if (request.Title != null && request.Title.Length > 100)
@@ -148,25 +101,6 @@ app.MapPut("/tasks/{id}", async(TaskService taskService, int id, UpdateTaskReque
 
 
 // Endpoint to add a new task. Returns the created task with its assigned ID.
-// app.MapPost("/tasks", (TaskService taskService, CreateTaskRequest request) =>
-// {
-//     if (string.IsNullOrWhiteSpace(request.Title))
-//     {
-//         return Results.BadRequest("Title is required.");
-//     }
-//     if (request.Title.Length > 100)
-//     {
-//         return Results.BadRequest("Title cannot exceed 100 characters.");
-//     }
-//     if (request.Description != null && request.Description.Length > 500)
-//     {
-//         return Results.BadRequest("Description cannot exceed 500 characters.");
-//     }
-
-//     var task = taskService.AddTask(request.Title, request.Description);
-//     return Results.Created($"/tasks/{task.Id}", task);
-// }).WithName("AddTask");
-
 app.MapPost("/tasks", async (TaskService taskService, CreateTaskRequest request) =>
 {
     if (string.IsNullOrWhiteSpace(request.Title))
@@ -188,25 +122,12 @@ app.MapPost("/tasks", async (TaskService taskService, CreateTaskRequest request)
 
 
 // Endpoint to remove a task
-// app.MapDelete("/tasks/{id}", (TaskService taskService, int id) =>
-// {
-//     bool success = taskService.RemoveTask(id);
-//     if (success)
-//     {
-//         return Results.Ok($"Task with ID {id} removed.");
-//     }
-//     else
-//     {
-//         return Results.NotFound($"Task with ID {id} not found.");
-//     }
-// }).WithName("RemoveTask");
-
 app.MapDelete("/tasks/{id}", async (TaskService taskService, int id) =>
 {
     bool success = await taskService.RemoveTaskAsync(id);
     if (success)
     {
-        return Results.Ok($"Task with ID {id} removed.");
+        return Results.NoContent();
     }
     else
     {

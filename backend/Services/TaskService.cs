@@ -6,22 +6,14 @@ namespace TaskList.Services;
 
 public class TaskService
 {
-    private List<TaskItem> tasks;
+
 
     private readonly TaskDbContext _db;
 
     public TaskService(TaskDbContext db)
     {
         _db = db;
-        tasks = _db.Tasks.ToList();
     }
-    // private int nextId;
-
-    // public TaskService()
-    // {
-    //     tasks = new List<TaskItem>();
-    //     nextId = 1;
-    // }
 
 
     public async Task<TaskItem> AddTaskAsync(string title, string? description)
@@ -36,19 +28,18 @@ public class TaskService
 
     public async Task<IEnumerable<TaskItem>> GetTasksAsync(bool? isCompleted = null)
     {
-        if (tasks.Count == 0)
-        {
-            Console.WriteLine("No tasks available.");
-            return Enumerable.Empty<TaskItem>();
-        }
+        var query = _db.Tasks.AsQueryable();
+
         if (isCompleted.HasValue)
         {
-            return await _db.Tasks.Where(t => t.IsCompleted == isCompleted.Value).OrderBy(t => t.Id).ToListAsync();
+            query = query.Where(t => t.IsCompleted == isCompleted.Value);
         }
 
-        return await _db.Tasks.OrderBy(t => t.Id).ToListAsync();
+        return await query.OrderBy(t => t.Id).ToListAsync();
     }
 
+    // New method to filter tasks by title, description, and completion status
+    // To be used later
     public async Task<List<TaskItem>> FilterTasksAsync(string? titleContains, string? descriptionContains, bool? isCompleted)
     {
         var query = _db.Tasks.AsQueryable();
@@ -67,7 +58,7 @@ public class TaskService
         }
 
         return await query.OrderBy(t => t.Id).ToListAsync();
-    } 
+    }
 
 
     public async Task<bool> RemoveTaskAsync(int id)
